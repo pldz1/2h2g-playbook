@@ -1,0 +1,28 @@
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:v2.57.0
+    container_name: filebrowser
+    restart: unless-stopped
+    user: "1001:1001"
+
+    ports:
+      - "10060:80"
+
+    volumes:
+      - /home/pldz1:/srv
+      - ./database:/database
+      - ./config:/config
+
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      '
+      if [ ! -f /database/filebrowser.db ]; then
+        filebrowser config init --database /database/filebrowser.db &&
+        filebrowser users add test 123 --perm.admin --database /database/filebrowser.db;
+      fi;
+      exec /init.sh
+        --database /database/filebrowser.db
+        --root /srv
+        --address 0.0.0.0
+        --port 80
+      '

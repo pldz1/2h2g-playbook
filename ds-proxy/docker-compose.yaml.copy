@@ -1,0 +1,34 @@
+services:
+  ds-proxy:
+    # 1. 显式指定镜像名，避免出现 ds-proxy-xxx 这种命名
+    image: ds-proxy:latest
+    
+    # 2. 构建配置
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      
+    container_name: ds-proxy
+    restart: unless-stopped
+
+    # 3. 挂载配置文件
+    # 建议：确保本地当前目录下已经有一个 config.yaml 文件
+    volumes:
+      - ./config.yaml:/root/src/conf/config.yaml:ro
+      - ./src/logs:/root/src/logs
+
+    # 4. 端口映射
+    ports:
+      - "7890:7890"   # HTTP/HTTPS 代理端口
+      - "9090:9090"   # Dashboard 控制面板端口, 如果不启动就注释掉
+
+    # 5. 运行指令
+    # 使用绝对路径确保内核能准确找到配置文件目录
+    command: ["/root/src/bin/amd64", "-d", "/root/src/conf"]
+    
+    # 6. 控制日志大小
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"   # 最大是10M一个文件
+        max-file: "3"     # 最多三个日志文件

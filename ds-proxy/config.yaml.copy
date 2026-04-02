@@ -13,6 +13,23 @@ allow-lan: true
 # 规则模式：rule（规则） / global（全局proxy）/ direct（全局直连）
 mode: rule
 
+# ─── 连接调优（解决 TIME_WAIT 堆积问题） ───────────
+tcp-concurrent: true          # 开启 TCP 并发复用（多个请求共享同一连接）
+unified-delay: true           # 使用统一延迟测量（测速更准确）
+
+# 保持连接活跃：每 15 秒探测空闲连接，快速清理不可用连接
+keep-alive-interval: 15       # 探测空闲连接间隔（秒）
+keep-alive-idle: 15           # 空闲多久开始探测（秒）
+
+# 限制连接池大小
+max-connections: 128          # 最大同时连接数（Mihomo 默认无限制）
+
+# 激进清理空闲连接
+idle-conn-timeout: 15         # 空闲上游连接超过 15 秒自动断开（默认 90 秒）
+
+# 降低并发拨号压力
+dial-timeout: 10              # 拨号超时时间 10 秒（超过则放弃连接）
+
 # 设置日志输出级别 (默认级别：silent，即不输出任何内容，以避免因日志内容过大而导致程序内存溢出）。
 # 5 个级别：silent / info / warning / error / debug。级别越高日志输出量越大，越倾向于调试，若需要请自行开启。
 log-level: info

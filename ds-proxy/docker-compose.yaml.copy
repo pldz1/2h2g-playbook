@@ -1,34 +1,87 @@
 services:
   ds-proxy:
-    # 1. 显式指定镜像名，避免出现 ds-proxy-xxx 这种命名
-    image: ds-proxy:latest
-    
-    # 2. 构建配置
-    build: 
-      context: .
-      dockerfile: Dockerfile
-      
+    # ───────────────
+    # 固定容器名字，避免 Docker 自动生成 ds-proxy-xxx
+    # ───────────────
     container_name: ds-proxy
+
+    # ───────────────
+    # 使用官方轻量 Alpine 镜像，无需 Dockerfile 构建
+    # ───────────────
+    image: alpine:3.18
+
+    # ───────────────
+    # 容器重启策略
+    # unless-stopped: 容器会在 Docker 启动时自动启动，手动停止后不再自动启动
+    # ───────────────
     restart: unless-stopped
 
-    # 3. 挂载配置文件
-    # 建议：确保本地当前目录下已经有一个 config.yaml 文件
+    # ───────────────
+    # 挂载宿主机文件和目录
+    # 1. Mihomo 可执行文件（挂载宿主机最新版本）
+    # 2. 配置文件 config.yaml
+    # 3. 日志目录（可写）
+    # 注意：:ro 只读，:rw 可写
+    # ───────────────
     volumes:
-      - ./config.yaml:/root/src/conf/config.yaml:ro
-      - ./src/logs:/root/src/logs
+      - ./src:/root/src
+      - ./config.yaml:/root/src/conf/config.yaml:ro   # 配置文件
 
-    # 4. 端口映射
+    # ───────────────
+    # 端口映射
+    # 7890:7890 → HTTP/HTTPS 代理端口映射到宿主机
+    # 如果启用 dashboard 控制面板，可解注释 9090:9090
+    # ───────────────
     ports:
-      - "7890:7890"   # HTTP/HTTPS 代理端口
-      - "9090:9090"   # Dashboard 控制面板端口, 如果不启动就注释掉
+      - "7890:7890"   # HTTP/HTTPS 代理
+      - "9090:9090"  # Dashboard 控制面板
 
-    # 5. 运行指令
-    # 使用绝对路径确保内核能准确找到配置文件目录
+    # ───────────────
+    # 容器启动命令
+    # -d 指定配置文件目录
+    # 绝对路径保证容器内部能找到配置文件
+    # ───────────────
     command: ["/root/src/bin/amd64", "-d", "/root/src/conf"]
-    
-    # 6. 控制日志大小
+
+    # ───────────────
+    # 日志管理
+    # 避免日志无限制增长占用磁盘
+    # max-size: 每个日志文件最大 10MB
+    # max-file: 保留最近 3 个日志文件
+    # ───────────────
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"   # 最大是10M一个文件
-        max-file: "3"     # 最多三个日志文件
+        max-size: "10m"
+        max-file: "3"
+
+    # ───────────────
+    # 内存限制，避免进程占用过多导致宿主机 OOM
+    # mem_limit: 容器使用内存上限
+    # memswap_limit: 禁用 swap
+    # oom_kill_disable: 是否允许 OOM killer
+    # ───────────────
+    mem_limit: 128m
+    memswap_limit: 512m
+    oom_kill_disable: false
+
+    # ───────────────
+    # 内核 TCP 调优（应用在容器内部）
+    # 优化高并发代理连接
+    # net.ipv4.tcp_fin_timeout: FIN_WAIT1/2 状态持续时间
+    # net.ipv4.tcp_tw_reuse: 允许 TIME_WAIT 连接重用
+    # net.ipv4.tcp_keepalive_*: 保持长连接心跳
+    # ───────────────
+    sysctls:
+      net.ipv4.tcp_fin_timeout: 15
+      net.ipv4.tcp_tw_reuse: 1
+      net.ipv4.tcp_keepalive_time: 60
+      net.ipv4.tcp_keepalive_intvl: 10
+      net.ipv4.tcp_keepalive_probes: 3
+
+    # ───────────────
+    # 可选：使用宿主机网络模式
+    # 如果你希望端口映射完全透明，使用 network_mode: host
+    # 注意：host 模式下 ports 不生效
+    # ───────────────
+    # network_mode: "host"

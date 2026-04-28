@@ -9,14 +9,16 @@
 | [Filebrowser](./filebrowser/README.md) | 网页文件管理器 🗂️，用于管理服务器文件 | 10060 | `./filebrowser/` |
 | [ttyd](./ttyd/README.md) | Web 终端 🖥️，通过浏览器操作服务器命令行 | 7689 | `./ttyd/` |
 | [ds-proxy](./ds-proxy/README.md) | 代理服务 🌐，基于 clash 内核，支持规则分流 | 7890 | `./ds-proxy/` |
+| [git-folder-dashboard](./git-folder-dashboard/README.md) | Git 文件夹 📁 的管理看板, 基于 `Python Flask` | 8765 | `./git-folder-dashboard` |
 > 后续会持续更新更多实验项目 🧰
 ---
 ## 🗂️ 目录结构示意
 ```
 /
-├── filebrowser/       # 网页文件管理器 🗂️
-├── ttyd/              # Web 终端 🖥️
-└── ds-proxy/          # 代理服务 🌐
+├── filebrowser/              # 网页文件管理器 🗂️
+├── ttyd/                     # Web 终端 🖥️
+├── ds-proxy/                 # 代理服务 🌐
+└── git-folder-dashboard/     # Git 文件夹管理 📁 
 ```
 ---
 ## ⚠️ 云服务器必看：防火墙 / 安全组放行端口
